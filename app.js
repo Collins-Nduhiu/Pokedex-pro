@@ -1,14 +1,15 @@
 $(document).ready(function() {
     const API_BASE_URL = 'https://pokeapi.co/api/v2/';
+    const CORS_PROXY = 'https://cors-anywhere.herokuapp.com/';
     let currentPage = 1;
     const pokemonPerPage = 12;
     let allPokemonData = [];
     let currentFilter = '';
-
+    
     // Function to fetch data from API
     async function fetchData(url) {
         try {
-            const response = await fetch(url);
+            const response = await fetch(CORS_PROXY + url);
             if (!response.ok) throw new Error('Network response was not ok');
             return await response.json();
         } catch (error) {
@@ -322,6 +323,7 @@ $(document).ready(function() {
             showError('Failed to load Pokemon types. Please refresh the page.');
         }
     }
+
 
     // Function to initialize navigation
     function initializeNavigation() {
