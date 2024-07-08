@@ -57,7 +57,7 @@ $(document).ready(function() {
         return `
             <div class="bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition duration-300" data-type="${pokemon.types[0].type.name}">
                 <div class="bg-gray-200 p-4">
-                    <img src="${pokemon.sprites.front_default}" alt="${pokemon.name}" class="w-full h-48 object-contain">
+                    <img src="placeholder.png" data-src="${pokemon.sprites.other['official-artwork'].front_default}" alt="${pokemon.name}" class="w-full h-48 object-contain lazy-image fade-in" onload="this.style.opacity=1" onerror="this.onerror=null; this.src='fallback-pokemon.png';">
                 </div>
                 <div class="p-4">
                     <h3 class="text-xl font-semibold mb-2 capitalize">${pokemon.name}</h3>
@@ -98,12 +98,14 @@ $(document).ready(function() {
 
             updatePagination(filteredPokemon.length);
             hideLoading();
+            lazyLoadImages();
+            preloadNextPageImages(page);
         } catch (error) {
             console.error('Error loading Pokemon:', error);
             showError('Failed to load Pokemon. Please try again.');
             hideLoading();
         }
-    }
+    }   
 
     // Function to update pagination
     function updatePagination(totalPokemon) {
@@ -331,7 +333,38 @@ $(document).ready(function() {
             <li><a href="#" class="text-white hover:text-gray-300 transition duration-300">About</a></li>
         `);
     }
+    function lazyLoadImages() {
+        const images = document.querySelectorAll('.lazy-image');
+        const options = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.1
+        };
 
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    img.src = img.dataset.src;
+                    img.classList.remove('lazy-image');
+                    observer.unobserve(img);
+                }
+            });
+        }, options);
+
+        images.forEach(img => observer.observe(img));
+    }
+
+    // New function to preload next page images
+    function preloadNextPageImages(page) {
+        const nextPage = page + 1;
+        const offset = nextPage * pokemonPerPage;
+        fetchData(`${API_BASE_URL}pokemon?limit=${pokemonPerPage}&offset=${offset}`)
+            .then(data => data.results.forEach(pokemon => {
+                const img = new Image();
+                img.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.url.split('/')[6]}.png`;
+            }));
+    }
     // Initial load
     loadPokemon(currentPage);
     initializeTypeFilter();
